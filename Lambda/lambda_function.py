@@ -111,21 +111,130 @@ In this section, you will create an Amazon Lambda function that will validate th
 
 """
 
+### Data Validations ###
+def validate_data(age, investment_amount, intent_request):
+    """
+    Validates the data provided by the user
+    """
+
+    # Validate that the user is between 1 and 65 years old
+    if age is not None:
+        # Since parameters are strings it's important to cast values
+        age = parse_int(age)
+        if age <= 0 or age >= 65:
+            return build_validation_result(
+                False,
+                'age',
+                'The value of age should be greater than zero and less than 65. '
+                'Please, provide a valid age.',
+            )
+
+    # Validate the investment amount, it should be > 5000
+    if investment_amount is not None:
+        # parse to integer
+        investment_amount = parse_int(investment_amount)  
+        
+        if investment_amount < 5000:
+            return build_validation_result(
+                False,
+                'investmentAmount',
+                'The value of investment amount should be greater than or equal to 5000. '
+                'Please, provide a valid investment amount.',
+            )
+
+    # True result is returned if age and amount are valid
+    return build_validation_result(True, None, None)
 
 ### Intents Handlers ###
 def recommend_portfolio(intent_request):
     """
     Performs dialog management and fulfillment for recommending a portfolio.
     """
-
+    # Parse values from slots
     first_name = get_slots(intent_request)["firstName"]
     age = get_slots(intent_request)["age"]
     investment_amount = get_slots(intent_request)["investmentAmount"]
     risk_level = get_slots(intent_request)["riskLevel"]
     source = intent_request["invocationSource"]
 
-    # YOUR CODE GOES HERE!
+    # Validation rules implemented
+    
+    if source == 'DialogCodeHook':
+        # This code performs basic validation on the supplied input slots.
+        
+        # Gets all the slots
+        slots = get_slots(intent_request)
+        
+        # Validates user's input using the validate_data function
+        validation_result = validate_data(age, investment_amount, intent_request)
+        
 
+        # If the data provided by the user is not valid,
+        # the elicitSlot dialog action is used to re-prompt for the first violation detected.
+        if not validation_result['isValid']:
+            slots[validation_result['violatedSlot']] = None # Cleans invalid 
+
+            # Returns an elicitSlot dialog to request new data for the invalid slot
+            return elicit_slot(
+                intent_request['sessionAttributes'],
+                intent_request['currentIntent']['name'],
+                slots,
+                validation_result['violatedSlot'],
+                validation_result['message'],
+            )
+        
+        # Fetch current session attributes
+        output_session_attributes = intent_request['sessionAttributes']
+        
+        # Once all slots are valid, a delegate dialog is returned to Lex to choose the next course of action.
+        return delegate(output_session_attributes, get_slots(intent_request))
+        
+    
+    risk_level = str(risk_level).lower()
+    
+    if risk_level == 'high':
+        # Return a message with 'high risk' portfolio recommendation.
+        return close(
+            intent_request['sessionAttributes'],
+            'Fulfilled',
+            {
+            'contentType': 'PlainText',
+            'content': """Thank you for your interest. The recommended portfolio for a {} level of risk is 20% bonds (AGG), 80% equities (SPY).""".format(risk_level)
+            }
+        )
+        
+    elif risk_level == 'medium':
+        # Return a message with 'medium risk' portfolio recommendation.
+        return close(
+            intent_request['sessionAttributes'],
+            'Fulfilled',
+            {
+            'contentType': 'PlainText',
+            'content': """Thank you for your interest. The recommended portfolio for a {} level of risk is 40% bonds (AGG), 60% equities (SPY).""".format(risk_level)
+            }
+        )
+    
+    elif risk_level == 'low':
+        # Return a message with 'low risk' portfolio recommendation.
+        return close(
+            intent_request['sessionAttributes'],
+            'Fulfilled',
+            {
+            'contentType': 'PlainText',
+            'content': """Thank you for your interest. The recommended portfolio for a {} level of risk is 60% bonds (AGG), 40% equities (SPY).""".format(risk_level)
+            }
+        )
+    
+    elif risk_level == 'none':
+        # Return a message with little to 'no risk' portfolio recommendation.
+        return close(
+            intent_request['sessionAttributes'],
+            'Fulfilled',
+            {
+            'contentType': 'PlainText',
+            'content': """Thank you for your interest; The recommended portfolio for a {} level of risk is 100% bonds (AGG), 0% equities (SPY).""".format(risk_level)
+            }
+        )
 
 ### Intents Dispatcher ###
 def dispatch(intent_request):
