@@ -1,6 +1,7 @@
 ### Required Libraries ###
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from botocore.vendored import requests
 
 ### Functionality Helper Functions ###
 def parse_int(n):
