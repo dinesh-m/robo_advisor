@@ -42,6 +42,13 @@ Follow the paths to view the test recordings.
 
 *Ref*: Recordings/robo_advisor_lex_lambda/lambda_lex_test_recording.mp4 - Testing of Robo Advisor with Amazon Lex and AWS Lambda function
 
+## Unit Testing of AWS Lambda Function
+
+|Scenario: Invalid Age|   |Scenario: Insufficient Amount|
+|:-:|:-:|:-:|
+|![Invalid Age](Images/lambda_test_invalid_age.png) || ![Insufficient Investment Amount](Images/lambda_test_insufficient_investment_amount.png)|
+
+
 ***Note***: Robo Advisor is implemented in Amazon Lex V1 console. Hence, it is compatible with Lex V1 console only.
 
 ---
